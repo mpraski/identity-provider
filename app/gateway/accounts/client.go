@@ -70,6 +70,14 @@ func (c *Client) Authenticate(ctx context.Context, email, password string) (*Acc
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"request failed with status: %d %s",
+			resp.StatusCode,
+			http.StatusText(resp.StatusCode),
+		)
+	}
+
 	var account Account
 	if err := json.NewDecoder(resp.Body).Decode(&account); err != nil {
 		return nil, fmt.Errorf("failed to decode account response: %w", err)

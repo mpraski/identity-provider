@@ -1,0 +1,22 @@
+<form class="form-consent" method="post" action="/authentication/consent">
+    {{if not .ConsentChallenge}}
+        <div class="text-center alert alert-danger" role="alert">
+            <b>{{ .ErrorName }}</b>
+            <br>
+            {{ .ErrorContent }}
+        </div>
+    {{end}}
+    {{if .ConsentChallenge}}
+    <h1 class="h3 mb-3 font-weight-normal">Authorization</h1>
+    <p></p>
+    {{range .RequestedScopes}}
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="grant_scope" value="{{.}}" id="{{.}}" checked>
+            <label class="form-check-label" for="{{.}}">{{.}}</label>
+        </div>
+    {{end}}
+    <input type="hidden" name="consent_challenge" value="{{.ConsentChallenge}}">
+    <input type="hidden" name="csrf_token" value="{{ .token }}">
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Authorize</button>
+    {{end}}
+</form>

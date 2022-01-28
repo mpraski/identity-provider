@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/mpraski/identity-provider/app/csrf"
 	"github.com/mpraski/identity-provider/app/provider"
 	"github.com/mpraski/identity-provider/app/template"
 	hydraAdmin "github.com/ory/hydra-client-go/client/admin"
@@ -22,6 +23,7 @@ const (
 	loginChallengeKey   = "login_challenge"
 	consentChallengeKey = "consent_challenge"
 	grantScopeKey       = "grant_scope"
+	rememberFor         = 3600
 )
 
 func New(
@@ -39,10 +41,10 @@ func New(
 func (s *Service) Router() http.Handler {
 	r := httprouter.New()
 
-	r.GET("/authentication/login", s.beginLogin)
-	r.POST("/authentication/login", s.completeLogin)
-	r.GET("/authentication/consent", s.beginConsent)
-	r.POST("/authentication/consent", s.completeConsent)
+	r.GET("/authentication/login", csrf.Protect(s.beginLogin))
+	r.POST("/authentication/login", csrf.Protect(s.completeLogin))
+	r.GET("/authentication/consent", csrf.Protect(s.beginConsent))
+	r.POST("/authentication/consent", csrf.Protect(s.completeConsent))
 
 	return r
 }
@@ -50,10 +52,10 @@ func (s *Service) Router() http.Handler {
 func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	challenge := strings.TrimSpace(r.URL.Query().Get(loginChallengeKey))
 	if challenge == "" {
-		_ = s.renderer.Render(w, http.StatusOK, "login", map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 			"ErrorName":    "login_challenge_missing",
 			"ErrorContent": "Login challenge is missing!",
-		})
+		}))
 
 		return
 	}
@@ -64,10 +66,10 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 
 	req, err := s.hydra.GetLoginRequest(params)
 	if err != nil {
-		_ = s.renderer.Render(w, http.StatusOK, "login", map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 			"ErrorName":    "login_request_failed",
 			"ErrorContent": "Failed to get login request info",
-		})
+		}))
 
 		return
 	}
@@ -87,10 +89,10 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 
 		reqAccept, err := s.hydra.AcceptLoginRequest(params)
 		if err != nil {
-			_ = s.renderer.Render(w, http.StatusOK, "login", map[string]interface{}{
+			_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 				"ErrorName":    "accept_login_request_failed",
 				"ErrorContent": "Failed to accept login request",
-			})
+			}))
 
 			return
 		}
@@ -100,9 +102,9 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 		return
 	}
 
-	_ = s.renderer.Render(w, http.StatusOK, "login", map[string]interface{}{
+	_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 		"LoginChallenge": challenge,
-	})
+	}))
 }
 
 func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -112,10 +114,10 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 	}
 
 	var (
-		loginChallenge = strings.TrimSpace(r.FormValue(loginChallengeKey))
-		email          = strings.TrimSpace(r.FormValue("email"))
-		password       = strings.TrimSpace(r.FormValue("password"))
-		rememberMe     = strings.TrimSpace(r.FormValue("remember_me"))
+		loginChallenge = strings.TrimSpace(r.PostFormValue(loginChallengeKey))
+		email          = strings.TrimSpace(r.PostFormValue("email"))
+		password       = strings.TrimSpace(r.PostFormValue("password"))
+		rememberMe     = strings.TrimSpace(r.PostFormValue("remember_me"))
 	)
 
 	if loginChallenge == "" {
@@ -123,8 +125,8 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 		return
 	}
 
-	i, err := s.providers[provider.Company].Provide(r.Context(), provider.Credentials{
-		"username": email,
+	i, err := s.providers[provider.Account].Provide(r.Context(), provider.Credentials{
+		"email":    email,
 		"password": password,
 	})
 
@@ -145,8 +147,9 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 	acceptParams.WithContext(r.Context())
 	acceptParams.SetLoginChallenge(loginChallenge)
 	acceptParams.SetBody(&models.AcceptLoginRequest{
-		Subject:  &i,
-		Remember: rememberMe == "true",
+		Subject:     &i,
+		Remember:    rememberMe == "true",
+		RememberFor: rememberFor,
 	})
 
 	reqAccept, err := s.hydra.AcceptLoginRequest(acceptParams)
@@ -161,10 +164,10 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	challenge := strings.TrimSpace(r.URL.Query().Get(consentChallengeKey))
 	if challenge == "" {
-		_ = s.renderer.Render(w, http.StatusOK, "consent", map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusOK, "consent", csrf.WithToken(r, map[string]interface{}{
 			"ErrorName":    "consent_challenge_missing",
 			"ErrorContent": "Consent challenge is missing!",
-		})
+		}))
 
 		return
 	}
@@ -175,10 +178,10 @@ func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprou
 
 	req, err := s.hydra.GetConsentRequest(params)
 	if err != nil {
-		_ = s.renderer.Render(w, http.StatusOK, "consent", map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusOK, "consent", csrf.WithToken(r, map[string]interface{}{
 			"ErrorName":    "consent_request_failed",
 			"ErrorContent": "Failed to get consent request info",
-		})
+		}))
 
 		return
 	}
@@ -207,11 +210,11 @@ func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprou
 		req.GetPayload().Client.ClientName,
 	)
 
-	_ = s.renderer.Render(w, http.StatusOK, "consent", map[string]interface{}{
+	_ = s.renderer.Render(w, http.StatusOK, "consent", csrf.WithToken(r, map[string]interface{}{
 		"ConsentChallenge": challenge,
 		"ConsentMessage":   consentMessage,
 		"RequestedScopes":  req.GetPayload().RequestedScope,
-	})
+	}))
 }
 
 func (s *Service) completeConsent(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -221,9 +224,14 @@ func (s *Service) completeConsent(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	var (
-		consentChallenge = strings.TrimSpace(r.FormValue(consentChallengeKey))
+		consentChallenge = strings.TrimSpace(r.PostFormValue(consentChallengeKey))
 		grantScope       = r.Form[grantScopeKey]
 	)
+
+	if consentChallenge == "" {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 
 	params := hydraAdmin.NewGetConsentRequestParams()
 	params.WithContext(r.Context())

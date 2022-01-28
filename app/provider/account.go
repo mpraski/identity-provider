@@ -18,17 +18,22 @@ var (
 	ErrAccountNotFound = errors.New("account not found")
 )
 
+const (
+	credEmail    = "email"
+	credPassword = "password"
+)
+
 func NewAccountProvider(client *accounts.Client) *AccountProvider {
 	return &AccountProvider{client: client}
 }
 
 func (p *AccountProvider) Provide(ctx context.Context, creds Credentials) (Subject, error) {
-	email, ok := creds["email"]
+	email, ok := creds[credEmail]
 	if !ok {
 		return "", ErrEmailMissing
 	}
 
-	password, ok := creds["password"]
+	password, ok := creds[credPassword]
 	if !ok {
 		return "", ErrPasswordMissing
 	}

@@ -18,8 +18,8 @@ type (
 	Providers map[string]Provider
 )
 
-const Company = "company"
+const Account = "account"
 
 func MakeProviders(client *accounts.Client) Providers {
-	return Providers{Company: NewAccountProvider(client)}
+	return Providers{Account: NewAccountProvider(client)}
 }
