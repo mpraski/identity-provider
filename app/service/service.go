@@ -52,10 +52,10 @@ func (s *Service) Router() http.Handler {
 func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	challenge := strings.TrimSpace(r.URL.Query().Get(loginChallengeKey))
 	if challenge == "" {
-		_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusBadRequest, "error", map[string]interface{}{
 			"ErrorName":    "login_challenge_missing",
-			"ErrorContent": "Login challenge is missing!",
-		}))
+			"ErrorContent": "Expected a login challenge to be set but received none",
+		})
 
 		return
 	}
@@ -68,7 +68,7 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	if err != nil {
 		_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 			"ErrorName":    "login_request_failed",
-			"ErrorContent": "Failed to get login request info",
+			"ErrorContent": "Failed to initiate login request",
 		}))
 
 		return
@@ -91,7 +91,7 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 		if err != nil {
 			_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
 				"ErrorName":    "accept_login_request_failed",
-				"ErrorContent": "Failed to accept login request",
+				"ErrorContent": "The resource owner denied the request",
 			}))
 
 			return
@@ -164,10 +164,10 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	challenge := strings.TrimSpace(r.URL.Query().Get(consentChallengeKey))
 	if challenge == "" {
-		_ = s.renderer.Render(w, http.StatusOK, "consent", csrf.WithToken(r, map[string]interface{}{
+		_ = s.renderer.Render(w, http.StatusBadRequest, "consent", map[string]interface{}{
 			"ErrorName":    "consent_challenge_missing",
-			"ErrorContent": "Consent challenge is missing!",
-		}))
+			"ErrorContent": "Expected a consent challenge to be set but received none",
+		})
 
 		return
 	}

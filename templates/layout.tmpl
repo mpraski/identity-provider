@@ -1,20 +1,16 @@
 <!-- templates/layout.tmpl -->
 <html>
   <head>
-    <title>My Layout</title>
-    <!-- Render the partial template called `css-$current_template` here -->
+    <title>OAuth 2.0 Login</title>
     {{ partial "css" }}
   </head>
   <body>
-    <!-- render the partial template called `header-$current_template` here -->
     <header>
       {{ partial "header" }}
     </header>
-    <!-- Render the current template here -->
     <main>
       {{ yield }}
     </main>
-    <!-- render the partial template called `footer-$current_template` here -->
     <footer>
       {{ partial "footer" }}
     </footer>

@@ -1,10 +1,8 @@
 <form method="post" action="/authentication/login">
   {{if .ErrorName}}
-      <div role="alert">
-          <b>{{ .ErrorName }}</b>
-          <br>
-          {{ .ErrorContent }}
-      </div>
+    <div role="alert">
+        <b>{{ .ErrorContent }}</b>
+    </div>
   {{end}}
   <h3>Please sign in</h3>
   <input type="hidden" name="login_challenge" value="{{.LoginChallenge}}">
