@@ -58,7 +58,7 @@ func (c *Client) Authenticate(ctx context.Context, email, password string) (*Ide
 		return nil, fmt.Errorf("failed to encode identity request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.baseURL, "/authenticate"), b)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.baseURL, "/authenticate/password"), b)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity request: %w", err)
 	}
