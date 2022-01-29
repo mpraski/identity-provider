@@ -130,7 +130,7 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 		return
 	}
 
-	i, err := s.providers[provider.Account].Provide(r.Context(), provider.Credentials{
+	i, err := s.providers[provider.Identity].Provide(r.Context(), provider.Credentials{
 		"email":    email,
 		"password": password,
 	})

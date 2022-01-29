@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mpraski/identity-provider/app/gateway/accounts"
+	"github.com/mpraski/identity-provider/app/gateway/identities"
 )
 
 type AccountProvider struct {
-	client *accounts.Client
+	client *identities.Client
 }
 
 var (
@@ -23,7 +23,7 @@ const (
 	credPassword = "password"
 )
 
-func NewAccountProvider(client *accounts.Client) *AccountProvider {
+func NewAccountProvider(client *identities.Client) *AccountProvider {
 	return &AccountProvider{client: client}
 }
 
@@ -38,14 +38,14 @@ func (p *AccountProvider) Provide(ctx context.Context, creds Credentials) (Subje
 		return "", ErrPasswordMissing
 	}
 
-	account, err := p.client.Authenticate(ctx, email, password)
+	identity, err := p.client.Authenticate(ctx, email, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate: %w", err)
 	}
 
-	if !account.Active {
+	if !identity.Active {
 		return "", ErrAccountNotFound
 	}
 
-	return account.ID.String(), nil
+	return identity.ID.String(), nil
 }

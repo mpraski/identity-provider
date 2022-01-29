@@ -1,4 +1,4 @@
-package accounts
+package identities
 
 import (
 	"bytes"
@@ -14,18 +14,18 @@ import (
 
 type (
 	Client struct {
-		client  *http.Client
 		baseURL string
+		client  *http.Client
 	}
 
-	Account struct {
-		ID        uuid.UUID `json:"id"`
-		Email     string    `json:"email"`
-		FirstName string    `json:"first_name"`
-		LastName  string    `json:"last_name"`
-		State     string    `json:"state"`
-		Roles     []string  `json:"roles"`
-		Active    bool      `json:"active"`
+	Identity struct {
+		ID     uuid.UUID `json:"id"`
+		Traits Traits    `json:"traits"`
+		Active bool      `json:"active"`
+	}
+
+	Traits struct {
+		Email string `json:"email"`
 	}
 
 	AuthenticateRequest struct {
@@ -45,7 +45,7 @@ func New(baseURL string) *Client {
 	}
 }
 
-func (c *Client) Authenticate(ctx context.Context, email, password string) (*Account, error) {
+func (c *Client) Authenticate(ctx context.Context, email, password string) (*Identity, error) {
 	var (
 		b = new(bytes.Buffer)
 		s = AuthenticateRequest{
@@ -55,17 +55,17 @@ func (c *Client) Authenticate(ctx context.Context, email, password string) (*Acc
 	)
 
 	if err := json.NewEncoder(b).Encode(s); err != nil {
-		return nil, fmt.Errorf("failed to encode account request: %w", err)
+		return nil, fmt.Errorf("failed to encode identity request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.baseURL, "/authenticate"), b)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create account request: %w", err)
+		return nil, fmt.Errorf("failed to create identity request: %w", err)
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make account request: %w", err)
+		return nil, fmt.Errorf("failed to make identity request: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -78,10 +78,10 @@ func (c *Client) Authenticate(ctx context.Context, email, password string) (*Acc
 		)
 	}
 
-	var account Account
-	if err := json.NewDecoder(resp.Body).Decode(&account); err != nil {
-		return nil, fmt.Errorf("failed to decode account response: %w", err)
+	var identity Identity
+	if err := json.NewDecoder(resp.Body).Decode(&identity); err != nil {
+		return nil, fmt.Errorf("failed to decode identity response: %w", err)
 	}
 
-	return &account, nil
+	return &identity, nil
 }

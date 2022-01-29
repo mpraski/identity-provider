@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/mpraski/identity-provider/app/gateway/accounts"
+	"github.com/mpraski/identity-provider/app/gateway/identities"
 )
 
 type (
@@ -18,8 +18,8 @@ type (
 	Providers map[string]Provider
 )
 
-const Account = "account"
+const Identity = "identity"
 
-func MakeProviders(client *accounts.Client) Providers {
-	return Providers{Account: NewAccountProvider(client)}
+func MakeProviders(client *identities.Client) Providers {
+	return Providers{Identity: NewAccountProvider(client)}
 }

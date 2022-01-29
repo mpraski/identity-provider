@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mpraski/identity-provider/app/gateway/accounts"
+	"github.com/mpraski/identity-provider/app/gateway/identities"
 	"github.com/mpraski/identity-provider/app/provider"
 	"github.com/mpraski/identity-provider/app/service"
 	"github.com/mpraski/identity-provider/app/template"
@@ -27,15 +27,15 @@ type input struct {
 		IdleTimeout     time.Duration `split_words:"true" default:"15s"`
 		ShutdownTimeout time.Duration `split_words:"true" default:"30s"`
 	}
-	Accounts struct {
-		BaseURL string `required:"true" split_words:"true"`
-	}
 	Hydra struct {
 		BaseURL string `required:"true" split_words:"true"`
 	}
 	Observability struct {
 		Address string `default:":9090"`
 	}
+	IdentityManager struct {
+		BaseURL string `required:"true" split_words:"true"`
+	} `split_words:"true"`
 }
 
 //go:embed templates/*.tmpl
@@ -65,7 +65,7 @@ func main() {
 		done      = make(chan bool)
 		quit      = make(chan os.Signal, 1)
 		renderer  = template.NewRenderer(embeds)
-		providers = provider.MakeProviders(accounts.New(i.Accounts.BaseURL))
+		providers = provider.MakeProviders(identities.New(i.IdentityManager.BaseURL))
 		router    = service.New(renderer, providers, hydra.NewHTTPClientWithConfig(nil,
 			&hydra.TransportConfig{
 				Schemes:  []string{hydraBaseURL.Scheme},
