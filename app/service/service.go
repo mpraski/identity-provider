@@ -53,8 +53,7 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	challenge := strings.TrimSpace(r.URL.Query().Get(loginChallengeKey))
 	if challenge == "" {
 		_ = s.renderer.Render(w, http.StatusBadRequest, "error", map[string]interface{}{
-			"ErrorName":    "login_challenge_missing",
-			"ErrorContent": "Expected a login challenge to be set but received none",
+			"ErrorMessage": "Expected a login challenge to be set but received none",
 		})
 
 		return
@@ -67,8 +66,7 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	req, err := s.hydra.GetLoginRequest(params)
 	if err != nil {
 		_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
-			"ErrorName":    "login_request_failed",
-			"ErrorContent": "Failed to initiate login request",
+			"ErrorMessage": "Failed to initiate login request",
 		}))
 
 		return
@@ -90,8 +88,7 @@ func (s *Service) beginLogin(w http.ResponseWriter, r *http.Request, _ httproute
 		reqAccept, err := s.hydra.AcceptLoginRequest(params)
 		if err != nil {
 			_ = s.renderer.Render(w, http.StatusOK, "login", csrf.WithToken(r, map[string]interface{}{
-				"ErrorName":    "accept_login_request_failed",
-				"ErrorContent": "The resource owner denied the request",
+				"ErrorMessage": "The resource owner denied the request",
 			}))
 
 			return
@@ -125,6 +122,14 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 		return
 	}
 
+	params := hydraAdmin.NewGetLoginRequestParams()
+	params.SetLoginChallenge(loginChallenge)
+
+	if _, err := s.hydra.GetLoginRequest(params); err != nil {
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
 	i, err := s.providers[provider.Account].Provide(r.Context(), provider.Credentials{
 		"email":    email,
 		"password": password,
@@ -132,14 +137,6 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	params := hydraAdmin.NewGetLoginRequestParams()
-	params.SetLoginChallenge(loginChallenge)
-
-	if _, err = s.hydra.GetLoginRequest(params); err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -165,8 +162,7 @@ func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprou
 	challenge := strings.TrimSpace(r.URL.Query().Get(consentChallengeKey))
 	if challenge == "" {
 		_ = s.renderer.Render(w, http.StatusBadRequest, "consent", map[string]interface{}{
-			"ErrorName":    "consent_challenge_missing",
-			"ErrorContent": "Expected a consent challenge to be set but received none",
+			"ErrorMessage": "Expected a consent challenge to be set but received none",
 		})
 
 		return
@@ -179,8 +175,7 @@ func (s *Service) beginConsent(w http.ResponseWriter, r *http.Request, p httprou
 	req, err := s.hydra.GetConsentRequest(params)
 	if err != nil {
 		_ = s.renderer.Render(w, http.StatusOK, "consent", csrf.WithToken(r, map[string]interface{}{
-			"ErrorName":    "consent_request_failed",
-			"ErrorContent": "Failed to get consent request info",
+			"ErrorMessage": "Failed to get consent request info",
 		}))
 
 		return

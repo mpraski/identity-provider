@@ -1,7 +1,7 @@
 <form method="post" action="/authentication/consent">
   {{if .ErrorName}}
     <div role="alert">
-        <b>{{ .ErrorContent }}</b>
+        <b>{{ .ErrorMessage }}</b>
     </div>
   {{end}}
   <h3>Authorization</h3>
