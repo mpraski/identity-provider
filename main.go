@@ -56,12 +56,12 @@ func init() {
 func main() {
 	var i input
 	if err := envconfig.Process(app, &i); err != nil {
-		log.Fatalf("failed to load input: %v\n", err)
+		log.Fatalf("failed to load input: %v", err)
 	}
 
 	hydraBaseURL, err := url.Parse(i.Hydra.BaseURL)
 	if err != nil {
-		log.Fatalf("failed to parse hydra base URL: %v\n", err)
+		log.Fatalf("failed to parse hydra base URL: %v", err)
 	}
 
 	var (
@@ -84,7 +84,7 @@ func main() {
 		log.Println("starting observability server at", i.Observability.Address)
 
 		if errs := observability.ListenAndServe(); errs != nil && errs != http.ErrServerClosed {
-			log.Fatalf("failed to start observability server on %s: %v\n", i.Observability.Address, errs)
+			log.Fatalf("failed to start observability server on %s: %v", i.Observability.Address, errs)
 		}
 	}()
 
@@ -110,11 +110,11 @@ func main() {
 		observability.SetKeepAlivesEnabled(false)
 
 		if err := main.Shutdown(ctx); err != nil {
-			log.Fatalf("failed to gracefully shutdown the server: %v\n", err)
+			log.Fatalf("failed to gracefully shutdown the server: %v", err)
 		}
 
 		if err := observability.Shutdown(ctx); err != nil {
-			log.Fatalf("failed to gracefully shutdown observability server: %v\n", err)
+			log.Fatalf("failed to gracefully shutdown observability server: %v", err)
 		}
 
 		close(done)
@@ -124,7 +124,7 @@ func main() {
 	atomic.StoreInt32(&healthy, 1)
 
 	if err := main.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("failed to listen on %s: %v\n", i.Server.Address, err)
+		log.Fatalf("failed to listen on %s: %v", i.Server.Address, err)
 	}
 
 	<-done
