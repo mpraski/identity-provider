@@ -62,11 +62,11 @@ func main() {
 	}
 
 	var (
-		done      = make(chan bool)
-		quit      = make(chan os.Signal, 1)
-		renderer  = template.NewRenderer(embeds)
-		providers = provider.MakeProviders(identities.New(i.IdentityManager.BaseURL))
-		router    = service.New(renderer, providers, hydra.NewHTTPClientWithConfig(nil,
+		done     = make(chan bool)
+		quit     = make(chan os.Signal, 1)
+		renderer = template.NewRenderer(embeds)
+		identity = provider.NewIdentityProvider(identities.New(i.IdentityManager.BaseURL))
+		router   = service.New(renderer, identity, hydra.NewHTTPClientWithConfig(nil,
 			&hydra.TransportConfig{
 				Schemes:  []string{hydraBaseURL.Scheme},
 				Host:     hydraBaseURL.Host,

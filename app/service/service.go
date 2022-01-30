@@ -14,9 +14,9 @@ import (
 )
 
 type Service struct {
-	renderer  *template.Renderer
-	providers provider.Providers
-	hydra     hydraAdmin.ClientService
+	renderer *template.Renderer
+	identity provider.Provider
+	hydra    hydraAdmin.ClientService
 }
 
 const (
@@ -28,13 +28,13 @@ const (
 
 func New(
 	renderer *template.Renderer,
-	providers provider.Providers,
+	identity provider.Provider,
 	hydra hydraAdmin.ClientService,
 ) *Service {
 	return &Service{
-		renderer:  renderer,
-		providers: providers,
-		hydra:     hydra,
+		renderer: renderer,
+		identity: identity,
+		hydra:    hydra,
 	}
 }
 
@@ -130,7 +130,7 @@ func (s *Service) completeLogin(w http.ResponseWriter, r *http.Request, p httpro
 		return
 	}
 
-	i, err := s.providers[provider.Identity].Provide(r.Context(), provider.Credentials{
+	i, err := s.identity.Provide(r.Context(), provider.Credentials{
 		"email":    email,
 		"password": password,
 	})

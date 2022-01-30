@@ -8,7 +8,7 @@ import (
 	"github.com/mpraski/identity-provider/app/gateway/identities"
 )
 
-type AccountProvider struct {
+type IdentityProvider struct {
 	client *identities.Client
 }
 
@@ -23,11 +23,11 @@ const (
 	credPassword = "password"
 )
 
-func NewAccountProvider(client *identities.Client) *AccountProvider {
-	return &AccountProvider{client: client}
+func NewIdentityProvider(client *identities.Client) *IdentityProvider {
+	return &IdentityProvider{client: client}
 }
 
-func (p *AccountProvider) Provide(ctx context.Context, creds Credentials) (Subject, error) {
+func (p *IdentityProvider) Provide(ctx context.Context, creds Credentials) (Subject, error) {
 	email, ok := creds[credEmail]
 	if !ok {
 		return "", ErrEmailMissing
