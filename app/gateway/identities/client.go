@@ -20,7 +20,6 @@ type (
 
 	Identity struct {
 		ID     uuid.UUID `json:"id"`
-		Traits Traits    `json:"traits"`
 		Active bool      `json:"active"`
 	}
 
@@ -62,6 +61,8 @@ func (c *Client) Authenticate(ctx context.Context, email, password string) (*Ide
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity request: %w", err)
 	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.client.Do(req)
 	if err != nil {
