@@ -43,9 +43,5 @@ func (p *AccountProvider) Provide(ctx context.Context, creds Credentials) (Subje
 		return "", fmt.Errorf("failed to authenticate: %w", err)
 	}
 
-	if !identity.Active {
-		return "", ErrAccountNotFound
-	}
-
 	return identity.ID.String(), nil
 }

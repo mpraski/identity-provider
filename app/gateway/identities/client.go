@@ -19,8 +19,7 @@ type (
 	}
 
 	Identity struct {
-		ID     uuid.UUID `json:"id"`
-		Active bool      `json:"active"`
+		ID uuid.UUID `json:"id"`
 	}
 
 	Traits struct {
