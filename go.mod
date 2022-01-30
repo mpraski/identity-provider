@@ -7,6 +7,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/ory/hydra-client-go v1.10.6
+	github.com/sirupsen/logrus v1.8.1
 	github.com/unrolled/render v1.4.1
 )
 

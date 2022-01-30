@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/mpraski/identity-provider/app/service"
 	"github.com/mpraski/identity-provider/app/template"
 	hydra "github.com/ory/hydra-client-go/client"
+	log "github.com/sirupsen/logrus"
 )
 
 type input struct {
@@ -47,18 +47,20 @@ var (
 	app     = "identity_provider"
 )
 
-func main() {
-	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
-	logger.Println("server is starting...")
+func init() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.WarnLevel)
+}
 
+func main() {
 	var i input
 	if err := envconfig.Process(app, &i); err != nil {
-		logger.Fatalf("failed to load input: %v\n", err)
+		log.Fatalf("failed to load input: %v\n", err)
 	}
 
 	hydraBaseURL, err := url.Parse(i.Hydra.BaseURL)
 	if err != nil {
-		logger.Fatalf("failed to parse hydra base URL: %v\n", err)
+		log.Fatalf("failed to parse hydra base URL: %v\n", err)
 	}
 
 	var (
@@ -78,10 +80,10 @@ func main() {
 	observability := newObservabilityServer(&i)
 
 	go func() {
-		logger.Println("starting observability server at", i.Observability.Address)
+		log.Println("starting observability server at", i.Observability.Address)
 
 		if errs := observability.ListenAndServe(); errs != nil && errs != http.ErrServerClosed {
-			logger.Fatalf("failed to start observability server on %s: %v\n", i.Observability.Address, errs)
+			log.Fatalf("failed to start observability server on %s: %v\n", i.Observability.Address, errs)
 		}
 	}()
 
@@ -97,7 +99,7 @@ func main() {
 
 	go func() {
 		<-quit
-		logger.Println("server is shutting down...")
+		log.Println("server is shutting down...")
 		atomic.StoreInt32(&healthy, 0)
 
 		ctx, cancel := context.WithTimeout(context.Background(), i.Server.ShutdownTimeout)
@@ -107,25 +109,25 @@ func main() {
 		observability.SetKeepAlivesEnabled(false)
 
 		if err := main.Shutdown(ctx); err != nil {
-			logger.Fatalf("failed to gracefully shutdown the server: %v\n", err)
+			log.Fatalf("failed to gracefully shutdown the server: %v\n", err)
 		}
 
 		if err := observability.Shutdown(ctx); err != nil {
-			logger.Fatalf("failed to gracefully shutdown observability server: %v\n", err)
+			log.Fatalf("failed to gracefully shutdown observability server: %v\n", err)
 		}
 
 		close(done)
 	}()
 
-	logger.Println("server is ready to handle requests at", i.Server.Address)
+	log.Println("server is ready to handle requests at", i.Server.Address)
 	atomic.StoreInt32(&healthy, 1)
 
 	if err := main.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Fatalf("failed to listen on %s: %v\n", i.Server.Address, err)
+		log.Fatalf("failed to listen on %s: %v\n", i.Server.Address, err)
 	}
 
 	<-done
-	logger.Println("server stopped")
+	log.Println("server stopped")
 }
 
 func healthz() http.Handler {
